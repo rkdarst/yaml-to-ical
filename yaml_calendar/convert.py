@@ -12,6 +12,7 @@ class YamlCalConverter():
         self.filename = filename
         self._load_yaml()
         self._ical = Calendar()
+        self._ical.add('summary', self._get_title())
         self._convert()
 
     def _load_yaml(self):
@@ -19,22 +20,29 @@ class YamlCalConverter():
         self.options = self.data['options']
         self.events = self.data['events']
 
-    def _get_period_label(self):
-        return self.options['period_label']
+    def _get_title(self):
+        return self.options['title']
 
-    @classmethod
-    def generate_series_datetimes(cls, start_date, start_time, end_time, days,
-                                  repeat):
-        days = [cls.DAYS_OF_WEEK[day] for day in days]
-        if len(days) == 0:
-            days = cls.DAYS_OF_WEEK.values()
+    def _count_in_title(self):
+        return self.options['count_in_title']
 
+    @staticmethod
+    def generate_series_datetimes(start_date, periods, start_time, end_time,
+                                  days, repeat):
         d = start_date
-
         results = []
 
         for i in xrange(repeat):
-            while d.weekday() not in days:
+            while True:
+                if periods is not None:
+                    if d < periods[0]['start'] or d > periods[0]['end']:
+                        periods.pop(0)
+                        if len(periods) == 0:
+                            raise ValueError("Cannot satisfy repeats within"
+                                             " given periods.")
+                        d = periods[0]['start']
+                if d.weekday() in days:
+                    break
                 d += timedelta(days=1)
 
             start = datetime.combine(d, time()) + timedelta(seconds=start_time)
@@ -46,29 +54,43 @@ class YamlCalConverter():
         return results
 
     def _create_description(self, event, i):
-        desc = ""
+        desc = []
         if 'description' in event:
-            desc += event['description'] + "\n\n"
-        desc += "{0} of {1}".format(i, event['repeat'])
-        desc += "\n{0}: {1}".format(self._get_period_label(),
-                                    event['period']['name'])
+            desc.append(event['description'])
+        if not self._count_in_title() and 'repeat' in event:
+            desc.append("{0} of {1}".format(i, event['repeat']))
         for attribute in event['meta']:
-            desc += "\n{0}: {1}".format(attribute['attribute'],
-                                        attribute['value'])
-        return desc
+            desc.append("{0}: {1}".format(attribute['attribute'],
+                                          attribute['value']))
+        return "\n".join(desc)
 
     def _convert(self):
         for event in self.events:
-            start_date = event['period']['start']
+            start_date = event['periods'][0]['start']
             if 'start_date' in event:
                 start_date = event['start_date']
+            repeat = 1
+            if 'repeat' in event:
+                repeat = event['repeat']
+            days = YamlCalConverter.DAYS_OF_WEEK.values()
+            if 'days' in event:
+                days = [YamlCalConverter.DAYS_OF_WEEK[day] for day in
+                        event['days']]
+            periods = None
+            if 'periods' in event:
+                periods = event['periods'] if len(event['periods']) != 0 else \
+                    None
+
             dates = YamlCalConverter.generate_series_datetimes(
-                start_date, event['start_time'], event['end_time'],
-                event['days'], event['repeat'])
+                start_date, periods, event['start_time'],
+                event['end_time'], days, repeat)
 
             for idx, (start, end) in enumerate(dates):
                 e = Event()
-                e.add('summary', event['name'])
+                title = event['name']
+                if self._count_in_title() and 'repeat' in event:
+                    title += " ({0} of {1})".format(idx + 1, event['repeat'])
+                e.add('summary', title)
                 e.add('description', self._create_description(event, idx + 1))
                 e.add('location', event['location']['description'])
                 e.add('dtstart', start)
