@@ -1,4 +1,4 @@
 *.pyc
 .*.sw[a-z]
 /venv/
-*.ical
+/out/
