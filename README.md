@@ -16,6 +16,7 @@ Example Input File
 options:
     title: Timetable
     count_in_title: true
+    timezone: Europe/London
 
 periods:
     - &term1

@@ -1,6 +1,7 @@
 import yaml
 from icalendar import Calendar, Event
 from datetime import datetime, time, timedelta
+import pytz
 
 
 class YamlCalConverter():
@@ -26,9 +27,12 @@ class YamlCalConverter():
     def _count_in_title(self):
         return self.options['count_in_title']
 
+    def _get_timezone(self):
+        return self.options['timezone']
+
     @staticmethod
     def generate_series_datetimes(start_date, periods, start_time, end_time,
-                                  days, repeat):
+                                  days, repeat, tz):
         d = start_date
         results = []
 
@@ -46,7 +50,9 @@ class YamlCalConverter():
                 d += timedelta(days=1)
 
             start = datetime.combine(d, time()) + timedelta(seconds=start_time)
+            start = tz.localize(start)
             end = datetime.combine(d, time()) + timedelta(seconds=end_time)
+            end = tz.localize(end)
             results.append((start, end))
 
             d += timedelta(days=1)
@@ -83,7 +89,8 @@ class YamlCalConverter():
 
             dates = YamlCalConverter.generate_series_datetimes(
                 start_date, periods, event['start_time'],
-                event['end_time'], days, repeat)
+                event['end_time'], days, repeat,
+                pytz.timezone(self._get_timezone()))
 
             for idx, (start, end) in enumerate(dates):
                 e = Event()
