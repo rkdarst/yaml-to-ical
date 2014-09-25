@@ -9,7 +9,7 @@ from yaml_calendar.convert import YamlCalConverter
 l = len(sys.argv)
 
 if l in [2, 3]:
-    converter = YamlCalConverter(sys.argv[1])
+    converter = YamlCalConverter(filename=sys.argv[1])
     if l == 2:
         print converter.get_ical()
     else:

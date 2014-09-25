@@ -9,17 +9,22 @@ class YamlCalConverter():
         'mo': 0, 'tu': 1, 'we': 2, 'th': 3, 'fr': 4, 'sa': 5, 'su': 6
     }
 
-    def __init__(self, filename):
-        self.filename = filename
-        self._load_yaml()
-        self._ical = Calendar()
-        self._ical.add('summary', self._get_title())
+    def __init__(self, filename=None, yaml_markup=None):
+        self.options = {}
+        self.events = []
+        self._load_yaml(filename, yaml_markup)
         self._convert()
 
-    def _load_yaml(self):
-        self.data = yaml.load(file(self.filename, 'r'))
-        self.options = self.data['options']
-        self.events = self.data['events']
+    def _load_yaml(self, filename, yaml_markup):
+        data = None
+        if filename is not None:
+            data = yaml.load(file(filename, 'r'))
+        elif yaml_markup is not None:
+            data = yaml.load(yaml_markup)
+        else:
+            raise ValueError('No YAML supplied.')
+        self.options.update(data['options'])
+        self.events += data['events']
 
     def _get_title(self):
         return self.options['title']
@@ -71,6 +76,8 @@ class YamlCalConverter():
         return "\n".join(desc)
 
     def _convert(self):
+        self._ical = Calendar()
+        self._ical.add('summary', self._get_title())
         for event in self.events:
             start_date = event['periods'][0]['start']
             if 'start_date' in event:
@@ -84,8 +91,8 @@ class YamlCalConverter():
                         event['days']]
             periods = None
             if 'periods' in event:
-                periods = event['periods'] if len(event['periods']) != 0 else \
-                    None
+                periods = list(event['periods']) if len(event['periods']) > 0 \
+                    else None
 
             dates = YamlCalConverter.generate_series_datetimes(
                 start_date, periods, event['start_time'],
@@ -104,8 +111,9 @@ class YamlCalConverter():
                 e.add('dtend', end)
                 self._ical.add_component(e)
 
-    def get_data(self):
-        return self.data
+    def add_data(self, filename=None, yaml_markup=None):
+        self._load_yaml(filename, yaml_markup)
+        self._convert()
 
     def get_ical(self):
         return self._ical.to_ical()
