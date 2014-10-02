@@ -13,7 +13,6 @@ class YamlCalConverter():
         self.options = {}
         self.events = []
         self._load_yaml(filename, yaml_markup)
-        self._convert()
 
     def _load_yaml(self, filename, yaml_markup):
         data = None
@@ -25,6 +24,7 @@ class YamlCalConverter():
             raise ValueError('No YAML supplied.')
         self.options.update(data['options'])
         self.events += data['events']
+        self.converted = False
 
     def _get_title(self):
         return self.options['title']
@@ -76,6 +76,8 @@ class YamlCalConverter():
         return "\n".join(desc)
 
     def _convert(self):
+        if self.converted:
+            return
         self._ical = Calendar()
         self._ical.add('summary', self._get_title())
         for event in self.events:
@@ -110,15 +112,17 @@ class YamlCalConverter():
                 e.add('dtstart', start)
                 e.add('dtend', end)
                 self._ical.add_component(e)
+        self.converted = True
 
     def add_data(self, filename=None, yaml_markup=None):
         self._load_yaml(filename, yaml_markup)
-        self._convert()
 
     def get_ical(self):
+        self._convert()
         return self._ical.to_ical()
 
     def save_ical(self, filename):
+        self._convert()
         f = open(filename, 'wb')
         f.write(self._ical.to_ical())
         f.close()
