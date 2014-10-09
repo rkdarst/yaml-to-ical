@@ -81,12 +81,8 @@ class YamlCalConverter():
         self._ical = Calendar()
         self._ical.add('summary', self._get_title())
         for event in self.events:
-            start_date = event['periods'][0]['start']
-            if 'start_date' in event:
-                start_date = event['start_date']
-            repeat = 1
-            if 'repeat' in event:
-                repeat = event['repeat']
+            start_date = event.get('start_date', event['periods'][0]['start'])
+            repeat = event.get('repeat', 1)
             days = YamlCalConverter.DAYS_OF_WEEK.values()
             if 'days' in event:
                 days = [YamlCalConverter.DAYS_OF_WEEK[day] for day in
@@ -101,11 +97,15 @@ class YamlCalConverter():
                 event['end_time'], days, repeat,
                 pytz.timezone(self._get_timezone()))
 
+            index_offset = event.get('start_at', 1)
+            total = event.get('out_of', repeat)
+
             for idx, (start, end) in enumerate(dates):
                 e = Event()
                 title = event['name']
-                if self._count_in_title() and 'repeat' in event:
-                    title += " ({0} of {1})".format(idx + 1, event['repeat'])
+                if self._count_in_title() and total > 1:
+                    title += " ({0} of {1})".format(index_offset + idx,
+                                                    total)
                 e.add('summary', title)
                 e.add('description', self._create_description(event, idx + 1))
                 e.add('location', event['location']['description'])
