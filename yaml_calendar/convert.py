@@ -80,6 +80,7 @@ class YamlCalConverter():
             return
         self._ical = Calendar()
         self._ical.add('summary', self._get_title())
+        tz = pytz.timezone(self._get_timezone())
         for event in self.events:
             start_date = event.get('start_date', event['periods'][0]['start'])
             repeat = event.get('repeat', 1)
@@ -94,13 +95,20 @@ class YamlCalConverter():
 
             dates = YamlCalConverter.generate_series_datetimes(
                 start_date, periods, event['start_time'],
-                event['end_time'], days, repeat,
-                pytz.timezone(self._get_timezone()))
+                event['end_time'], days, repeat, tz)
 
             index_offset = event.get('start_at', 1)
             total = event.get('out_of', repeat)
+            overrides_unlocalized = event.get('overrides', {})
+            overrides = {}
+            for key, val in overrides_unlocalized.iteritems():
+                overrides[tz.localize(key)] = {
+                    'start': tz.localize(val['start']),
+                    'end': tz.localize(val['end']),
+                }
 
             for idx, (start, end) in enumerate(dates):
+                times = overrides.get(start, {'start': start, 'end': end})
                 e = Event()
                 title = event['name']
                 if self._count_in_title() and total > 1:
@@ -109,8 +117,8 @@ class YamlCalConverter():
                 e.add('summary', title)
                 e.add('description', self._create_description(event, idx + 1))
                 e.add('location', event['location']['description'])
-                e.add('dtstart', start)
-                e.add('dtend', end)
+                e.add('dtstart', times['start'])
+                e.add('dtend', times['end'])
                 self._ical.add_component(e)
         self.converted = True
 

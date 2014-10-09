@@ -48,6 +48,10 @@ events:
       meta:
           - attribute: Lecturer
             value: Dr J Smith
+      overrides:
+          2014-10-10 10:00:00:
+              start: 2014-10-11 10:00:00
+              end: 2014-10-11 11:00:00
 ```
 
 Authors
