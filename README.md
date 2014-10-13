@@ -36,7 +36,7 @@ locations:
 
 events:
     - name: Lecture Name
-      description: Topics: A, B, C
+      description: Topics A, B, C
       location: *loc1
       periods: [*term1, *term2]
       days: [mo, we, fr]
