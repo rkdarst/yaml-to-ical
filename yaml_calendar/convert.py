@@ -83,7 +83,6 @@ class YamlCalConverter():
         self._ical.add('summary', self._get_title())
         self._ical.add('version', '2.0')
         self._ical.add('prodid', 'yaml-to-ical-custom')
-        #self._ical.add('dtstamp', e.get('dtstart'))
         tz = pytz.timezone(self._get_timezone())
         for event in self.events:
             start_date = event.get('start_date')
@@ -129,6 +128,7 @@ class YamlCalConverter():
                     e.add('location', event['location']['description'])
                 e.add('dtstart', times['start'])
                 e.add('dtend', times['end'])
+                e.add('dtstamp', pytz.utc.localize(datetime.utcnow()))
                 self._ical.add_component(e)
         self.converted = True
 
