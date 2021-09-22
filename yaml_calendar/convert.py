@@ -13,6 +13,7 @@ class YamlCalConverter():
         self.options = {}
         self.events = []
         self._load_yaml(filename, yaml_markup)
+        self.seen_ids = { }
 
     def _load_yaml(self, filename, yaml_markup):
         data = None
@@ -85,6 +86,9 @@ class YamlCalConverter():
         self._ical.add('prodid', 'yaml-to-ical-custom')
         tz = pytz.timezone(self._get_timezone())
         for event in self.events:
+            if event['id'] in self.seen_ids:
+                raise ValueError("Duplicate event id: %s"%(event['id'],))
+            self.seen_ids[event['id']] = True
             start_date = event.get('start_date')
             if start_date is None:
                 start_date = event['periods'][0]['start']
