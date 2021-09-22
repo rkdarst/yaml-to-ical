@@ -17,9 +17,9 @@ class YamlCalConverter():
     def _load_yaml(self, filename, yaml_markup):
         data = None
         if filename is not None:
-            data = yaml.load(file(filename, 'r'))
+            data = yaml.safe_load(open(filename, 'r'))
         elif yaml_markup is not None:
-            data = yaml.load(yaml_markup)
+            data = yaml.safe_load(yaml_markup)
         else:
             raise ValueError('No YAML supplied.')
         self.options.update(data['options'])
