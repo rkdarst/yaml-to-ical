@@ -30,7 +30,7 @@ class YamlCalConverter():
         return self.options['title']
 
     def _count_in_title(self):
-        return self.options['count_in_title']
+        return self.options.get('count_in_title', True)
 
     def _get_timezone(self):
         return self.options['timezone']
@@ -70,9 +70,10 @@ class YamlCalConverter():
             desc.append(event['description'])
         if not self._count_in_title() and 'repeat' in event:
             desc.append("{0} of {1}".format(i, event['repeat']))
-        for attribute in event['meta']:
-            desc.append("{0}: {1}".format(attribute['attribute'],
-                                          attribute['value']))
+        if 'meta' in event:
+            for attribute in event['meta']:
+                desc.append("{0}: {1}".format(attribute['attribute'],
+                                              attribute['value']))
         return "\n".join(desc)
 
     def _convert(self):
@@ -82,7 +83,9 @@ class YamlCalConverter():
         self._ical.add('summary', self._get_title())
         tz = pytz.timezone(self._get_timezone())
         for event in self.events:
-            start_date = event.get('start_date', event['periods'][0]['start'])
+            start_date = event.get('start_date')
+            if start_date is None:
+                start_date = event['periods'][0]['start']
             repeat = event.get('repeat', 1)
             days = YamlCalConverter.DAYS_OF_WEEK.values()
             if 'days' in event:
@@ -116,7 +119,10 @@ class YamlCalConverter():
                                                     total)
                 e.add('summary', title)
                 e.add('description', self._create_description(event, idx + 1))
-                e.add('location', event['location']['description'])
+                if isinstance(event['location'], str):
+                    e.add('location', event['location'])
+                else:
+                    e.add('location', event['location']['description'])
                 e.add('dtstart', times['start'])
                 e.add('dtend', times['end'])
                 self._ical.add_component(e)
