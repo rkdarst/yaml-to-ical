@@ -81,6 +81,9 @@ class YamlCalConverter():
             return
         self._ical = Calendar()
         self._ical.add('summary', self._get_title())
+        self._ical.add('version', '2.0')
+        self._ical.add('prodid', 'yaml-to-ical-custom')
+        #self._ical.add('dtstamp', e.get('dtstart'))
         tz = pytz.timezone(self._get_timezone())
         for event in self.events:
             start_date = event.get('start_date')
@@ -113,6 +116,7 @@ class YamlCalConverter():
             for idx, (start, end) in enumerate(dates):
                 times = overrides.get(start, {'start': start, 'end': end})
                 e = Event()
+                e.add('uid', event['id'] + '-' + str(idx))
                 title = event['name']
                 if self._count_in_title() and total > 1:
                     title += " ({0} of {1})".format(index_offset + idx,
