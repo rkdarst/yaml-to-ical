@@ -41,7 +41,7 @@ class YamlCalConverter():
         d = start_date
         results = []
 
-        for i in xrange(repeat):
+        for i in range(repeat):
             while True:
                 if periods is not None:
                     if d < periods[0]['start'] or d > periods[0]['end']:
@@ -101,7 +101,7 @@ class YamlCalConverter():
             total = event.get('out_of', repeat)
             overrides_unlocalized = event.get('overrides', {})
             overrides = {}
-            for key, val in overrides_unlocalized.iteritems():
+            for key, val in overrides_unlocalized.items():
                 overrides[tz.localize(key)] = {
                     'start': tz.localize(val['start']),
                     'end': tz.localize(val['end']),
