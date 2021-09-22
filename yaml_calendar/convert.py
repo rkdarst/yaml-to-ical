@@ -1,5 +1,5 @@
 import yaml
-from icalendar import Calendar, Event
+from icalendar import Calendar, Event, prop
 from datetime import datetime, time, timedelta
 import pytz
 
@@ -126,9 +126,9 @@ class YamlCalConverter():
                     e.add('location', event['location'])
                 else:
                     e.add('location', event['location']['description'])
-                e.add('dtstart', times['start'])
-                e.add('dtend', times['end'])
-                e.add('dtstamp', pytz.utc.localize(datetime.utcnow()))
+                e.add('dtstart', prop.vDatetime(times['start']))
+                e.add('dtend', prop.vDatetime(times['end']))
+                e.add('dtstamp', prop.vDatetime(pytz.utc.localize(datetime.utcnow())))
                 self._ical.add_component(e)
         self.converted = True
 
